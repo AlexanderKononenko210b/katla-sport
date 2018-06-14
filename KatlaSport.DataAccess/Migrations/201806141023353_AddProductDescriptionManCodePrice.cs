@@ -9,8 +9,8 @@ namespace KatlaSport.DataAccess.Migrations
     {
         public override void Up()
         {
-            AddColumn("dbo.catalogue_products", "product_description", c => c.String(maxLength: 300));
-            AddColumn("dbo.catalogue_products", "product_manufacturer_code", c => c.String(maxLength: 10));
+            AddColumn("dbo.catalogue_products", "product_description", c => c.String(nullable: true, maxLength: 300));
+            AddColumn("dbo.catalogue_products", "product_manufacturer_code", c => c.String(nullable: false, maxLength: 10));
             AddColumn("dbo.catalogue_products", "product_price", c => c.Decimal(nullable: false, precision: 18, scale: 2));
         }
 
