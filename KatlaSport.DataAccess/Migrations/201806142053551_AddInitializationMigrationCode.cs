@@ -2,6 +2,9 @@ namespace KatlaSport.DataAccess.Migrations
 {
     using System.Data.Entity.Migrations;
 
+    /// <summary>
+    /// Migration for set ManufacturerCode property as IsRequared
+    /// </summary>
     public partial class AddInitializationMigrationCode : DbMigration
     {
         public override void Up()
