@@ -1,6 +1,6 @@
 export class HiveSectionListItem {
     constructor(
-        public id : Int16Array,
+        public id : number,
 
         public name : string,
 
