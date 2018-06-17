@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
+using AutoFixture;
 using KatlaSport.DataAccess;
 using KatlaSport.DataAccess.ProductStoreHive;
 using KatlaSport.Services.HiveManagement;
@@ -10,7 +12,7 @@ namespace KatlaSport.Services.Tests.HiveManagement
     /// <summary>
     /// Tests class for test HiveService
     /// </summary>
-    public class HiveManagementServiceTests
+    public class SetStateAsyncTests
     {
         private Mock<IProductStoreHiveContext> _context;
 
@@ -18,7 +20,7 @@ namespace KatlaSport.Services.Tests.HiveManagement
 
         private Mock<IEntitySet<StoreHive>> _mockSet;
 
-        public HiveManagementServiceTests()
+        public SetStateAsyncTests()
         {
             _context = new Mock<IProductStoreHiveContext>();
 
@@ -91,6 +93,40 @@ namespace KatlaSport.Services.Tests.HiveManagement
             await service.SetStatusAsync(userId, hiveSectionStatusAfter);
 
             Assert.Equal(hiveSectionStatusAfter, storeHiveSection.IsDeleted);
+        }
+
+        /// <summary>
+        /// Not found hive for set state
+        /// </summary>
+        /// <returns>Task</returns>
+        [Theory]
+        [AutoMoqData]
+        public async Task SetStatusAsync_Hive_RequestedResourceNotFoundException(IFixture fixture)
+        {
+            var storeHives = fixture.CreateMany<StoreHive>(0).ToArray();
+
+            _context.Setup(s => s.Hives).ReturnsEntitySet(storeHives);
+
+            var service = new HiveService(_context.Object, _userContext.Object);
+
+            await Assert.ThrowsAsync<RequestedResourceNotFoundException>(() => service.SetStatusAsync(1, true));
+        }
+
+        /// <summary>
+        /// Not found hiveSection for set state
+        /// </summary>
+        /// <returns>Task</returns>
+        [Theory]
+        [AutoMoqData]
+        public async Task SetStatusAsync_HiveSection_RequestedResourceNotFoundException(IFixture fixture)
+        {
+            var storeSectionHives = fixture.CreateMany<StoreHiveSection>(0).ToArray();
+
+            _context.Setup(s => s.Sections).ReturnsEntitySet(storeSectionHives);
+
+            var service = new HiveSectionService(_context.Object, _userContext.Object);
+
+            await Assert.ThrowsAsync<RequestedResourceNotFoundException>(() => service.SetStatusAsync(1, true));
         }
     }
 }
