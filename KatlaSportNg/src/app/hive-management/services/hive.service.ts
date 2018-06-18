@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { Hive } from '../models/hive';
 import { HiveListItem } from '../models/hive-list-item';
 import { HiveSectionListItem } from '../models/hive-section-list-item';
+import { UpdateHiveRequest } from '../models/update-hive-request';
 
 @Injectable({
   providedIn: 'root'
@@ -26,19 +27,19 @@ export class HiveService {
     return this.http.get<Array<HiveSectionListItem>>(`${this.url}${hiveId}/sections`);
   }
 
-  addHive(hive: Hive): Observable<Hive> {
-    return null;
+  addHive(updateHiveRequest: UpdateHiveRequest): Observable<Object> {
+    return this.http.post(`${this.url}/add`, updateHiveRequest);
   }
 
-  updateHive(hive: Hive): Observable<Object> {
-    return null;
+  updateHive(hiveId: number, updateHiveRequest: UpdateHiveRequest ): Observable<Object> {
+    return this.http.put(`${this.url}${hiveId}`, updateHiveRequest);
   }
 
   deleteHive(hiveId: number): Observable<Object> {
-    return null;
+    return this.http.delete(`${this.url}${hiveId}`);
   }
 
-  setHiveStatus(hiveId: number, deletedStatus: boolean): Observable<number> {
-    return this.http.put<number>(`${this.url}${hiveId}/status/${deletedStatus}`, {});
+  setHiveStatus(hiveId: number, deletedStatus: boolean): Observable<Object> {
+    return this.http.put(`${this.url}${hiveId}/status/${deletedStatus}`, {});
   }
 }

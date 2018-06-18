@@ -90,7 +90,7 @@ namespace KatlaSport.WebApi.Controllers
         /// <param name="updateHiveRequest">hives model</param>
         /// <returns>Task{IHttpActionResult}</returns>
         [HttpPost]
-        [Route("")]
+        [Route("add")]
         [SwaggerResponse(HttpStatusCode.Created, "Successful create hive", typeof(Hive))]
         [SwaggerResponse(HttpStatusCode.BadRequest, "Data for create is not valid")]
         [SwaggerResponse(HttpStatusCode.Conflict, "Conflict on the server")]
