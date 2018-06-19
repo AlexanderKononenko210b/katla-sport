@@ -120,4 +120,7 @@
   <data name="BadCreateRequest" xml:space="preserve">
     <value>Data for create is not valid</value>
   </data>
+  <data name="NotFoundData" xml:space="preserve">
+    <value>Data is not found</value>
+  </data>
 </root>

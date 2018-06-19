@@ -3,6 +3,7 @@ using AutoMapper;
 using DataAccessHive = KatlaSport.DataAccess.ProductStoreHive.StoreHive;
 using DataAccessHiveSection = KatlaSport.DataAccess.ProductStoreHive.StoreHiveSection;
 using DbHive = KatlaSport.DataAccess.ProductStoreHive.StoreHive;
+using DbHiveSection = KatlaSport.DataAccess.ProductStoreHive.StoreHiveSection;
 
 namespace KatlaSport.Services.HiveManagement
 {
@@ -17,6 +18,8 @@ namespace KatlaSport.Services.HiveManagement
             CreateMap<UpdateHiveRequest, DataAccessHive>()
                 .ForMember(r => r.LastUpdated, opt => opt.MapFrom(p => DateTime.UtcNow));
             CreateMap<UpdateHiveRequest, DbHive>();
+            CreateMap<UpdateHiveSectionRequest, DataAccessHiveSection>();
+            //CreateMap<DbHiveSection, HiveSection>();
         }
     }
 }

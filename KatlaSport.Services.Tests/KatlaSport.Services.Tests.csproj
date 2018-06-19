@@ -102,7 +102,7 @@
     <Compile Include="CustomerManagement\CustomerManagementServiceAutoFixtureTests.cs" />
     <Compile Include="CustomerManagement\CustomerManagementServiceTests.cs" />
     <Compile Include="FakeEntitySet.cs" />
-    <Compile Include="HiveManagement\AddUpdateDeleteHiveTests.cs" />
+    <Compile Include="HiveManagement\AddUpdateDeleteHiveAndHiveSectionTests.cs" />
     <Compile Include="HiveManagement\SetStateAsyncTests.cs" />
     <Compile Include="MockExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
