@@ -68,5 +68,14 @@ namespace KatlaSport.WebApi.Properties {
                 return ResourceManager.GetString("BadCreateRequest", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Data is not found.
+        /// </summary>
+        internal static string NotFoundData {
+            get {
+                return ResourceManager.GetString("NotFoundData", resourceCulture);
+            }
+        }
     }
 }
