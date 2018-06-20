@@ -95,7 +95,7 @@ namespace KatlaSport.WebApi.Controllers
         /// <param name="updateRequest">hives section model</param>
         /// <returns>Task{IHttpActionResult}</returns>
         [HttpPost]
-        [Route("add")]
+        [Route("add/{hiveId:int:min(1)}")]
         [SwaggerResponse(HttpStatusCode.Created, "Successful create hive section", typeof(HiveSection))]
         [SwaggerResponse(HttpStatusCode.BadRequest, "Data for create is not valid")]
         [SwaggerResponse(HttpStatusCode.Conflict, "Conflict on the server")]
@@ -130,7 +130,7 @@ namespace KatlaSport.WebApi.Controllers
         /// <param name="updateRequest">hives section model for update</param>
         /// <returns>Task{IHttpActionResult}</returns>
         [HttpPut]
-        [Route("{hiveSectionId:int:min(1)}")]
+        [Route("update/{hiveSectionId:int:min(1)}")]
         [SwaggerResponse(HttpStatusCode.NoContent, "Update is succesfully")]
         [SwaggerResponse(HttpStatusCode.BadRequest, "Data for update is not valid")]
         [SwaggerResponse(HttpStatusCode.Conflict, "Conflict on the server")]

@@ -14,6 +14,8 @@ export class HiveFormComponent implements OnInit {
   hive = new Hive(0, "", "", "", false, "");
   existed = false;
   updateHiveRequest = new UpdateHiveRequest("","","");
+  hiveId = 0;
+  lastUpdate = "";
 
   constructor(
     private route: ActivatedRoute,
@@ -26,6 +28,7 @@ export class HiveFormComponent implements OnInit {
       if (p['id'] === undefined) return;
       this.hiveService.getHive(p['id']).subscribe(h => this.hive = h);
       this.existed = true;
+      this.hiveId = p['id'];
     });
   }
 
@@ -42,7 +45,7 @@ export class HiveFormComponent implements OnInit {
     this.updateHiveRequest.code = this.hive.code;
     this.updateHiveRequest.address = this.hive.address;
 
-    if(this.hive.id == 0)
+    if(!this.existed)
     {
        return this.hiveService.addHive(this.updateHiveRequest)
         .subscribe(h => this.navigateToHives());
@@ -63,6 +66,15 @@ export class HiveFormComponent implements OnInit {
   }
 
   onPurge() {
-    return this.hive = new Hive(0,"","","",false,"");
+    this.hiveService.deleteHive(this.hive.id).subscribe(p => this.navigateToHives());
+  }
+
+  onClear() {
+    this.hiveId = this.hive.id;
+    this.lastUpdate = this.hive.lastUpdated;
+    if(this.hiveId == 0) {
+      this.hiveId = this.hive.id;
+    }
+    this.hive = new Hive(this.hiveId,"","","",false,this.lastUpdate);
   }
 }
