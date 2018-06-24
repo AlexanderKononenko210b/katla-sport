@@ -65,7 +65,7 @@ namespace KatlaSport.Services.Tests.HiveManagement
         /// <summary>
         /// Set Status HiveSection IsDelete
         /// </summary>
-        /// <param name="userId">users id</param>
+        /// <param name="sectionId">sections id</param>
         /// <param name="hiveSectionStatusBefor">status hive section befor update</param>
         /// <param name="hiveSectionStatusAfter">status hive section after update</param>
         /// <returns>Task</returns>
@@ -74,11 +74,11 @@ namespace KatlaSport.Services.Tests.HiveManagement
         [InlineData(1, true, false)]
         [InlineData(1, false, false)]
         [InlineData(1, true, true)]
-        public async Task SetStatusAsync_SetHiveSectionStatus(int userId, bool hiveSectionStatusBefor, bool hiveSectionStatusAfter)
+        public async Task SetStatusAsync_SetHiveSectionStatus(int sectionId, bool hiveSectionStatusBefor, bool hiveSectionStatusAfter)
         {
             var storeHiveSection = new StoreHiveSection();
 
-            storeHiveSection.Id = userId;
+            storeHiveSection.Id = sectionId;
 
             storeHiveSection.IsDeleted = hiveSectionStatusBefor;
 
@@ -90,7 +90,7 @@ namespace KatlaSport.Services.Tests.HiveManagement
 
             var service = new HiveSectionService(_context.Object, _userContext.Object);
 
-            await service.SetStatusAsync(userId, hiveSectionStatusAfter);
+            await service.SetStatusAsync(sectionId, hiveSectionStatusAfter);
 
             Assert.Equal(hiveSectionStatusAfter, storeHiveSection.IsDeleted);
         }

@@ -114,6 +114,7 @@
     <Compile Include="HiveManagement\HiveSectionServiceTests.cs" />
     <Compile Include="HiveManagement\SetStateAsyncTests.cs" />
     <Compile Include="MockExtensions.cs" />
+    <Compile Include="ProductManagement\ProductCategoryServiceTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -145,6 +146,7 @@
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

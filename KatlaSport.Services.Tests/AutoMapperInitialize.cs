@@ -2,6 +2,7 @@
 using System.Threading;
 using AutoMapper;
 using KatlaSport.Services.HiveManagement;
+using KatlaSport.Services.ProductManagement;
 
 namespace KatlaSport.Services.Tests
 {
@@ -19,6 +20,7 @@ namespace KatlaSport.Services.Tests
             Mapper.Initialize(x =>
             {
                 x.AddProfile<HiveManagementMappingProfile>();
+                x.AddProfile<ProductManagementMappingProfile>();
             });
         }
 
