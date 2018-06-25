@@ -303,7 +303,7 @@ namespace KatlaSport.Services.Tests.HiveManagement
             IFixture fixture)
         {
             // arrange
-            var dbSections = fixture.CreateMany<StoreHiveSection>(5).ToList();
+            var dbSections = fixture.CreateMany<StoreHiveSection>(5).OrderBy(s => s.Id).ToList();
 
             var hiveId = dbSections[0].StoreHiveId;
 

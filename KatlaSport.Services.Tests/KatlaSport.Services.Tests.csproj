@@ -114,6 +114,7 @@
     <Compile Include="HiveManagement\HiveSectionServiceTests.cs" />
     <Compile Include="HiveManagement\SetStateAsyncTests.cs" />
     <Compile Include="MockExtensions.cs" />
+    <Compile Include="ProductManagement\ProductCatalogueServiceTests.cs" />
     <Compile Include="ProductManagement\ProductCategoryServiceTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

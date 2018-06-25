@@ -47,9 +47,9 @@ namespace KatlaSport.Services.Tests.ProductManagement
 
             int start = 0, amount = 2;
 
-            var categories = context.Setup(s => s.Categories).ReturnsEntitySet(dbCategories);
+            context.Setup(s => s.Categories).ReturnsEntitySet(dbCategories);
 
-            var products = context.Setup(s => s.Products).ReturnsEntitySet(dbProducts);
+            context.Setup(s => s.Products).ReturnsEntitySet(dbProducts);
 
             // act
             var productCategoryListItems = await service.GetCategoriesAsync(start, amount);
@@ -82,7 +82,7 @@ namespace KatlaSport.Services.Tests.ProductManagement
 
             var categoryId = dbCategories[3].Id;
 
-            var categories = context.Setup(s => s.Categories).ReturnsEntitySet(dbCategories);
+            context.Setup(s => s.Categories).ReturnsEntitySet(dbCategories);
 
             // act
             var category = await service.GetCategoryAsync(categoryId);
@@ -112,7 +112,7 @@ namespace KatlaSport.Services.Tests.ProductManagement
 
             var categoryId = dbCategories[0].Id + dbCategories[1].Id + dbCategories[2].Id;
 
-            var categories = context.Setup(s => s.Categories).ReturnsEntitySet(dbCategories);
+            context.Setup(s => s.Categories).ReturnsEntitySet(dbCategories);
 
             // assert
             await Assert.ThrowsAsync<RequestedResourceNotFoundException>(() => service.GetCategoryAsync(categoryId));
