@@ -39,9 +39,11 @@ namespace KatlaSport.Services.ProductManagement
 
             var categories = dbCategories.Select(c => Mapper.Map<ProductCategoryListItem>(c)).ToList();
 
-            foreach (var c in categories)
+            foreach (var category in categories)
             {
-                c.ProductCount = await _context.Products.Where(p => p.CategoryId == c.Id).CountAsync();
+                category.ProductCount = await _context.Products
+                    .Where(p => p.CategoryId == category.Id)
+                    .CountAsync();
             }
 
             return categories;
@@ -50,62 +52,60 @@ namespace KatlaSport.Services.ProductManagement
         /// <inheritdoc/>
         public async Task<ProductCategory> GetCategoryAsync(int categoryId)
         {
-            var dbCategories = await _context.Categories
-                .Where(p => p.Id == categoryId)
-                .ToArrayAsync().ConfigureAwait(false);
+            var dbCategory = await _context.Categories
+                .FirstOrDefaultAsync(p => p.Id == categoryId)
+                .ConfigureAwait(false);
 
-            if (dbCategories.Length == 0)
+            if (dbCategory == null)
             {
                 throw new RequestedResourceNotFoundException();
             }
 
-            return Mapper.Map<DbProductCategory, ProductCategory>(dbCategories[0]);
+            return Mapper.Map<DbProductCategory, ProductCategory>(dbCategory);
         }
 
         /// <inheritdoc/>
         public async Task<ProductCategory> CreateCategoryAsync(UpdateProductCategoryRequest createRequest)
         {
-            var dbCategories = await _context.Categories
-                .Where(c => c.Code == createRequest.Code)
-                .ToArrayAsync().ConfigureAwait(false);
+            var dbCategory = await _context.Categories
+                .FirstOrDefaultAsync(c => c.Code == createRequest.Code)
+                .ConfigureAwait(false);
 
-            if (dbCategories.Length > 0)
+            if (dbCategory != null)
             {
                 throw new RequestedResourceHasConflictException("code");
             }
 
-            var dbCategory = Mapper.Map<UpdateProductCategoryRequest, DbProductCategory>(createRequest);
-            dbCategory.CreatedBy = _userContext.UserId;
-            dbCategory.LastUpdatedBy = _userContext.UserId;
-            _context.Categories.Add(dbCategory);
+            var category = Mapper.Map<UpdateProductCategoryRequest, DbProductCategory>(createRequest);
+            category.CreatedBy = _userContext.UserId;
+            category.LastUpdatedBy = _userContext.UserId;
+            _context.Categories.Add(category);
 
             await _context.SaveChangesAsync().ConfigureAwait(false);
 
-            return Mapper.Map<ProductCategory>(dbCategory);
+            return Mapper.Map<ProductCategory>(category);
         }
 
         /// <inheritdoc/>
         public async Task<ProductCategory> UpdateCategoryAsync(int categoryId, UpdateProductCategoryRequest updateRequest)
         {
-            var dbCategories = await _context.Categories
-                .Where(c => c.Code == updateRequest.Code && c.Id != categoryId)
-                .ToArrayAsync().ConfigureAwait(false);
+            var dbCategory = await _context.Categories
+                .FirstOrDefaultAsync(c => c.Code == updateRequest.Code && c.Id != categoryId)
+                .ConfigureAwait(false);
 
-            if (dbCategories.Length > 0)
+            if (dbCategory != null)
             {
                 throw new RequestedResourceHasConflictException("code");
             }
 
-            dbCategories = await _context.Categories
-                .Where(c => c.Id == categoryId)
-                .ToArrayAsync().ConfigureAwait(false);
+            dbCategory = await _context.Categories
+                .FirstOrDefaultAsync(c => c.Id == categoryId)
+                .ConfigureAwait(false);
 
-            if (dbCategories.Length == 0)
+            if (dbCategory == null)
             {
                 throw new RequestedResourceNotFoundException();
             }
-
-            var dbCategory = dbCategories[0];
 
             Mapper.Map(updateRequest, dbCategory);
             dbCategory.LastUpdatedBy = _userContext.UserId;
@@ -120,43 +120,43 @@ namespace KatlaSport.Services.ProductManagement
         /// <inheritdoc/>
         public async Task DeleteCategoryAsync(int categoryId)
         {
-            var dbCategories = await _context.Categories
-                .Where(c => categoryId == c.Id)
-                .ToArrayAsync().ConfigureAwait(false);
+            var dbCategory = await _context.Categories
+                .FirstOrDefaultAsync(c => categoryId == c.Id)
+                .ConfigureAwait(false);
 
-            if (dbCategories.Length == 0)
+            if (dbCategory == null)
             {
                 throw new RequestedResourceNotFoundException();
             }
 
-            var dbCategory = dbCategories[0];
             if (dbCategory.IsDeleted == false)
             {
                 throw new RequestedResourceHasConflictException();
             }
 
             _context.Categories.Remove(dbCategory);
+
             await _context.SaveChangesAsync().ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
         public async Task SetStatusAsync(int categoryId, bool deletedStatus)
         {
-            var dbCategories = await _context.Categories
-                .Where(c => categoryId == c.Id)
-                .ToArrayAsync().ConfigureAwait(false);
+            var dbCategory = await _context.Categories
+                .FirstOrDefaultAsync(c => categoryId == c.Id)
+                .ConfigureAwait(false);
 
-            if (dbCategories.Length == 0)
+            if (dbCategory == null)
             {
                 throw new RequestedResourceNotFoundException();
             }
 
-            var dbCategory = dbCategories[0];
             if (dbCategory.IsDeleted != deletedStatus)
             {
                 dbCategory.IsDeleted = deletedStatus;
                 dbCategory.LastUpdated = DateTime.UtcNow;
                 dbCategory.LastUpdatedBy = _userContext.UserId;
+
                 await _context.SaveChangesAsync().ConfigureAwait(false);
             }
         }
