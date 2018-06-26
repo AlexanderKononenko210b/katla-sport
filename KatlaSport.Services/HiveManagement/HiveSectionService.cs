@@ -31,31 +31,7 @@ namespace KatlaSport.Services.HiveManagement
         /// <inheritdoc/>
         public async Task<List<HiveSectionListItem>> GetHiveSectionsAsync()
         {
-            var dbHiveSections = await _context.Sections.OrderBy(s => s.Id).ToArrayAsync().ConfigureAwait(false);
-            var hiveSections = dbHiveSections.Select(s => Mapper.Map<HiveSectionListItem>(s)).ToList();
-            return hiveSections;
-        }
-
-        /// <inheritdoc/>
-        public async Task<HiveSection> GetHiveSectionAsync(int hiveSectionId)
-        {
             var dbHiveSections = await _context.Sections
-                .Where(s => s.Id == hiveSectionId)
-                .ToArrayAsync().ConfigureAwait(false);
-
-            if (dbHiveSections.Length == 0)
-            {
-                throw new RequestedResourceNotFoundException();
-            }
-
-            return Mapper.Map<DbHiveSection, HiveSection>(dbHiveSections[0]);
-        }
-
-        /// <inheritdoc/>
-        public async Task<List<HiveSectionListItem>> GetHiveSectionsAsync(int hiveId)
-        {
-            var dbHiveSections = await _context.Sections
-                .Where(s => s.StoreHiveId == hiveId)
                 .OrderBy(s => s.Id)
                 .ToArrayAsync().ConfigureAwait(false);
 
@@ -64,107 +40,137 @@ namespace KatlaSport.Services.HiveManagement
         }
 
         /// <inheritdoc/>
-        public async Task<HiveSection> CreateHiveSectionAsync(int hiveId, UpdateHiveSectionRequest createRequest)
+        public async Task<HiveSection> GetHiveSectionAsync(int hiveSectionId)
         {
-            var dbHiveSections = await _context.Sections
-                .Where(h => h.Code == createRequest.Code)
-                .ToArrayAsync().ConfigureAwait(false);
+            var dbHiveSection = await _context.Sections
+                .FirstOrDefaultAsync(s => s.Id == hiveSectionId)
+                .ConfigureAwait(false);
 
-            if (dbHiveSections.Length > 0)
-            {
-                throw new RequestedResourceHasConflictException("code");
-            }
-
-            var dbHives = await _context.Hives.Where(x => x.Id == hiveId).ToArrayAsync();
-            if (dbHives.Length == 0)
+            if (dbHiveSection == null)
             {
                 throw new RequestedResourceNotFoundException();
             }
 
-            var dbHiveSection = Mapper.Map<UpdateHiveSectionRequest, DbHiveSection>(createRequest);
-            dbHiveSection.StoreHiveId = hiveId;
-            dbHiveSection.CreatedBy = _userContext.UserId;
-            dbHiveSection.LastUpdatedBy = _userContext.UserId;
-            dbHiveSection.Created = DateTime.Now;
-            dbHiveSection.LastUpdated = DateTime.Now;
+            return Mapper.Map<DbHiveSection, HiveSection>(dbHiveSection);
+        }
 
-            _context.Sections.Add(dbHiveSection);
+        /// <inheritdoc/>
+        public async Task<List<HiveSectionListItem>> GetHiveSectionsAsync(int hiveId)
+        {
+            var dbHiveSections = await _context.Sections
+                .Where(s => s.StoreHiveId == hiveId)
+                .OrderBy(s => s.Id)
+                .ToListAsync().ConfigureAwait(false);
+
+            var hiveSections = dbHiveSections.Select(s => Mapper.Map<HiveSectionListItem>(s)).ToList();
+
+            return hiveSections;
+        }
+
+        /// <inheritdoc/>
+        public async Task<HiveSection> CreateHiveSectionAsync(int hiveId, UpdateHiveSectionRequest createRequest)
+        {
+            var dbHiveSection = await _context.Sections
+                .FirstOrDefaultAsync(h => h.Code == createRequest.Code)
+                .ConfigureAwait(false);
+
+            if (dbHiveSection != null)
+            {
+                throw new RequestedResourceHasConflictException("code");
+            }
+
+            var dbHive = await _context.Hives
+                .FirstOrDefaultAsync(x => x.Id == hiveId)
+                .ConfigureAwait(false);
+
+            if (dbHive == null)
+            {
+                throw new RequestedResourceNotFoundException();
+            }
+
+            var hiveSection = Mapper.Map<UpdateHiveSectionRequest, DbHiveSection>(createRequest);
+            hiveSection.StoreHiveId = hiveId;
+            hiveSection.CreatedBy = _userContext.UserId;
+            hiveSection.LastUpdatedBy = _userContext.UserId;
+            hiveSection.Created = DateTime.Now;
+            hiveSection.LastUpdated = DateTime.Now;
+
+            _context.Sections.Add(hiveSection);
+
             await _context.SaveChangesAsync().ConfigureAwait(false);
 
-            return Mapper.Map<HiveSection>(dbHiveSection);
+            return Mapper.Map<HiveSection>(hiveSection);
         }
 
         /// <inheritdoc/>
         public async Task<HiveSection> UpdateHiveSectionAsync(int hiveSectionId, UpdateHiveSectionRequest updateRequest)
         {
-            var dbHiveSections = await _context.Sections
-                .Where(p => p.Code == updateRequest.Code && p.Id != hiveSectionId)
-                .ToArrayAsync().ConfigureAwait(false);
+            var dbHiveSection = await _context.Sections
+                .FirstOrDefaultAsync(p => p.Code == updateRequest.Code && p.Id != hiveSectionId)
+                .ConfigureAwait(false);
 
-            if (dbHiveSections.Length > 0)
+            if (dbHiveSection != null)
             {
                 throw new RequestedResourceHasConflictException("code");
             }
 
-            dbHiveSections = await _context.Sections
-                .Where(p => p.Id == hiveSectionId)
-                .ToArrayAsync().ConfigureAwait(false);
+            var hiveSection = await _context.Sections
+                .FirstOrDefaultAsync(p => p.Id == hiveSectionId)
+                .ConfigureAwait(false);
 
-            if (dbHiveSections.Length == 0)
+            if (hiveSection == null)
             {
                 throw new RequestedResourceNotFoundException();
             }
 
-            var dbHiveSection = dbHiveSections[0];
-
-            Mapper.Map(updateRequest, dbHiveSection);
-            dbHiveSection.LastUpdatedBy = _userContext.UserId;
+            Mapper.Map(updateRequest, hiveSection);
+            hiveSection.LastUpdatedBy = _userContext.UserId;
 
             await _context.SaveChangesAsync().ConfigureAwait(false);
 
-            return Mapper.Map<HiveSection>(dbHiveSection);
+            return Mapper.Map<HiveSection>(hiveSection);
         }
 
         /// <inheritdoc/>
         public async Task DeleteHiveSectionAsync(int hiveSectionId)
         {
-            var dbHiveSections = await _context.Sections
-                .Where(p => p.Id == hiveSectionId)
-                .ToArrayAsync().ConfigureAwait(false);
+            var dbHiveSection = await _context.Sections
+                .FirstOrDefaultAsync(p => p.Id == hiveSectionId)
+                .ConfigureAwait(false);
 
-            if (dbHiveSections.Length == 0)
+            if (dbHiveSection == null)
             {
                 throw new RequestedResourceNotFoundException();
             }
 
-            var dbHiveSection = dbHiveSections[0];
             if (dbHiveSection.IsDeleted == false)
             {
                 throw new RequestedResourceHasConflictException();
             }
 
             _context.Sections.Remove(dbHiveSection);
+
             await _context.SaveChangesAsync().ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
         public async Task SetStatusAsync(int hiveSectionId, bool deletedStatus)
         {
-            var dbHiveSections = await _context.Sections
-                .Where(c => hiveSectionId == c.Id)
-                .ToArrayAsync().ConfigureAwait(false);
+            var dbHiveSection = await _context.Sections
+                .FirstOrDefaultAsync(c => hiveSectionId == c.Id)
+                .ConfigureAwait(false);
 
-            if (dbHiveSections.Length == 0)
+            if (dbHiveSection == null)
             {
                 throw new RequestedResourceNotFoundException();
             }
 
-            var dbHiveSection = dbHiveSections[0];
             if (dbHiveSection.IsDeleted != deletedStatus)
             {
                 dbHiveSection.IsDeleted = deletedStatus;
                 dbHiveSection.LastUpdated = DateTime.UtcNow;
                 dbHiveSection.LastUpdatedBy = _userContext.UserId;
+
                 await _context.SaveChangesAsync().ConfigureAwait(false);
             }
         }

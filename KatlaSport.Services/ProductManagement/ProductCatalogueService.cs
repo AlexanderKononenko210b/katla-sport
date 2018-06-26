@@ -35,7 +35,7 @@ namespace KatlaSport.Services.ProductManagement
                 .OrderBy(p => p.Id)
                 .Skip(start)
                 .Take(amount)
-                .ToArrayAsync().ConfigureAwait(false);
+                .ToListAsync().ConfigureAwait(false);
 
             var products = dbProducts.Select(p => Mapper.Map<ProductListItem>(p)).ToList();
 
@@ -45,11 +45,11 @@ namespace KatlaSport.Services.ProductManagement
         /// <inheritdoc/>
         public async Task<List<ProductCategoryProductListItem>> GetCategoryProductsAsync(int productCategoryId)
         {
-            var dbCategories = await _context.Categories
-                .Where(p => p.Id == productCategoryId)
-                .ToArrayAsync().ConfigureAwait(false);
+            var dbCategorie = await _context.Categories
+                .FirstOrDefaultAsync(p => p.Id == productCategoryId)
+                .ConfigureAwait(false);
 
-            if (dbCategories.Length == 0)
+            if (dbCategorie == null)
             {
                 throw new RequestedResourceNotFoundException();
             }
@@ -57,120 +57,120 @@ namespace KatlaSport.Services.ProductManagement
             var dbProducts = await _context.Products
                 .OrderBy(p => p.Id)
                 .Where(p => p.CategoryId == productCategoryId)
-                .Select(p => Mapper.Map<ProductCategoryProductListItem>(p))
                 .ToListAsync().ConfigureAwait(false);
 
-            return dbProducts;
+            var products = dbProducts.Select(p => Mapper.Map<ProductCategoryProductListItem>(p)).ToList();
+
+            return products;
         }
 
         /// <inheritdoc/>
         public async Task<Product> GetProductAsync(int productId)
         {
-            var dbProducts = await _context.Products
-                .Where(p => p.Id == productId)
-                .ToArrayAsync().ConfigureAwait(false);
+            var dbProduct = await _context.Products
+                .FirstOrDefaultAsync(p => p.Id == productId)
+                .ConfigureAwait(false);
 
-            if (dbProducts.Length == 0)
+            if (dbProduct == null)
             {
                 throw new RequestedResourceNotFoundException();
             }
 
-            return Mapper.Map<DbProduct, Product>(dbProducts[0]);
+            return Mapper.Map<DbProduct, Product>(dbProduct);
         }
 
         /// <inheritdoc/>
         public async Task<Product> CreateProductAsync(UpdateProductRequest createRequest)
         {
-            var dbProducts = await _context.Products
-                .Where(p => p.Code == createRequest.Code)
-                .ToArrayAsync().ConfigureAwait(false);
+            var dbProduct = await _context.Products
+                .FirstOrDefaultAsync(p => p.Code == createRequest.Code)
+                .ConfigureAwait(false);
 
-            if (dbProducts.Length > 0)
+            if (dbProduct != null)
             {
                 throw new RequestedResourceHasConflictException("code");
             }
 
-            var dbProduct = Mapper.Map<UpdateProductRequest, DbProduct>(createRequest);
-            dbProduct.CreatedBy = _userContext.UserId;
-            dbProduct.LastUpdatedBy = _userContext.UserId;
-            _context.Products.Add(dbProduct);
+            var product = Mapper.Map<UpdateProductRequest, DbProduct>(createRequest);
+            product.CreatedBy = _userContext.UserId;
+            product.LastUpdatedBy = _userContext.UserId;
+
+            _context.Products.Add(product);
 
             await _context.SaveChangesAsync().ConfigureAwait(false);
 
-            return Mapper.Map<Product>(dbProduct);
+            return Mapper.Map<Product>(product);
         }
 
         /// <inheritdoc/>
         public async Task<Product> UpdateProductAsync(int productId, UpdateProductRequest updateRequest)
         {
-            var dbProducts = await _context.Products
-                .Where(p => p.Code == updateRequest.Code && p.Id != productId)
-                .ToArrayAsync().ConfigureAwait(false);
+            var dbProduct = await _context.Products
+                .FirstOrDefaultAsync(p => p.Code == updateRequest.Code && p.Id != productId)
+                .ConfigureAwait(false);
 
-            if (dbProducts.Length > 0)
+            if (dbProduct != null)
             {
                 throw new RequestedResourceHasConflictException("code");
             }
 
-            dbProducts = await _context.Products
-                .Where(p => p.Id == productId)
-                .ToArrayAsync().ConfigureAwait(false);
+            var product = await _context.Products
+                .FirstOrDefaultAsync(p => p.Id == productId)
+                .ConfigureAwait(false);
 
-            if (dbProducts.Length == 0)
+            if (product == null)
             {
                 throw new RequestedResourceNotFoundException();
             }
 
-            var dbProduct = dbProducts[0];
-
-            Mapper.Map(updateRequest, dbProduct);
-            dbProduct.LastUpdatedBy = _userContext.UserId;
+            Mapper.Map(updateRequest, product);
+            product.LastUpdatedBy = _userContext.UserId;
 
             await _context.SaveChangesAsync().ConfigureAwait(false);
 
-            return Mapper.Map<Product>(dbProduct);
+            return Mapper.Map<Product>(product);
         }
 
         /// <inheritdoc/>
         public async Task DeleteProductAsync(int productId)
         {
-            var products = await _context.Products
-                .Where(p => p.Id == productId)
-                .ToArrayAsync().ConfigureAwait(false);
+            var product = await _context.Products
+                .FirstOrDefaultAsync(p => p.Id == productId)
+                .ConfigureAwait(false);
 
-            if (products.Length == 0)
+            if (product == null)
             {
                 throw new RequestedResourceNotFoundException();
             }
 
-            var product = products[0];
             if (product.IsDeleted == false)
             {
                 throw new RequestedResourceHasConflictException();
             }
 
             _context.Products.Remove(product);
+
             await _context.SaveChangesAsync().ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
         public async Task SetStatusAsync(int productId, bool deletedStatus)
         {
-            var products = await _context.Products
-                .Where(p => productId == p.Id)
-                .ToArrayAsync().ConfigureAwait(false);
+            var product = await _context.Products
+                .FirstOrDefaultAsync(p => productId == p.Id)
+                .ConfigureAwait(false);
 
-            if (products.Length == 0)
+            if (product == null)
             {
                 throw new RequestedResourceNotFoundException();
             }
 
-            var dbCategory = products[0];
-            if (dbCategory.IsDeleted != deletedStatus)
+            if (product.IsDeleted != deletedStatus)
             {
-                dbCategory.IsDeleted = deletedStatus;
-                dbCategory.LastUpdated = DateTime.UtcNow;
-                dbCategory.LastUpdatedBy = _userContext.UserId;
+                product.IsDeleted = deletedStatus;
+                product.LastUpdated = DateTime.UtcNow;
+                product.LastUpdatedBy = _userContext.UserId;
+
                 await _context.SaveChangesAsync().ConfigureAwait(false);
             }
         }

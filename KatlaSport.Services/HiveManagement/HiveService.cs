@@ -31,12 +31,17 @@ namespace KatlaSport.Services.HiveManagement
         /// <inheritdoc/>
         public async Task<List<HiveListItem>> GetHivesAsync()
         {
-            var dbHives = await _context.Hives.OrderBy(h => h.Id).ToArrayAsync().ConfigureAwait(false);
+            var dbHives = await _context.Hives
+                .OrderBy(h => h.Id)
+                .ToListAsync().ConfigureAwait(false);
+
             var hives = dbHives.Select(h => Mapper.Map<HiveListItem>(h)).ToList();
 
-            foreach (HiveListItem hive in hives)
+            foreach (var hive in hives)
             {
-                hive.HiveSectionCount = _context.Sections.Where(s => s.StoreHiveId == hive.Id).Count();
+                hive.HiveSectionCount = await _context.Sections
+                    .Where(s => s.StoreHiveId == hive.Id)
+                    .CountAsync();
             }
 
             return hives;
@@ -45,56 +50,62 @@ namespace KatlaSport.Services.HiveManagement
         /// <inheritdoc/>
         public async Task<Hive> GetHiveAsync(int hiveId)
         {
-            var dbHives = await _context.Hives.Where(h => h.Id == hiveId).ToArrayAsync().ConfigureAwait(false);
-            if (dbHives.Length == 0)
+            var dbHive = await _context.Hives
+                .FirstOrDefaultAsync(h => h.Id == hiveId)
+                .ConfigureAwait(false);
+
+            if (dbHive == null)
             {
                 throw new RequestedResourceNotFoundException();
             }
 
-            return Mapper.Map<DbHive, Hive>(dbHives[0]);
+            return Mapper.Map<DbHive, Hive>(dbHive);
         }
 
         /// <inheritdoc/>
         public async Task<Hive> CreateHiveAsync(UpdateHiveRequest createRequest)
         {
-            var dbHives = await _context.Hives.Where(h => h.Code == createRequest.Code).ToArrayAsync().ConfigureAwait(false);
-            if (dbHives.Length > 0)
+            var dbHive = await _context.Hives
+                .FirstOrDefaultAsync(h => h.Code == createRequest.Code)
+                .ConfigureAwait(false);
+
+            if (dbHive != null)
             {
                 throw new RequestedResourceHasConflictException("code");
             }
 
-            var dbHive = Mapper.Map<UpdateHiveRequest, DbHive>(createRequest);
-            dbHive.CreatedBy = _userContext.UserId;
-            dbHive.LastUpdatedBy = _userContext.UserId;
-            dbHive.Created = DateTime.Now;
-            dbHive.LastUpdated = DateTime.Now;
-            _context.Hives.Add(dbHive);
+            var hive = Mapper.Map<UpdateHiveRequest, DbHive>(createRequest);
+            hive.CreatedBy = _userContext.UserId;
+            hive.LastUpdatedBy = _userContext.UserId;
+            hive.Created = DateTime.Now;
+            hive.LastUpdated = DateTime.Now;
+            _context.Hives.Add(hive);
 
             await _context.SaveChangesAsync().ConfigureAwait(false);
 
-            return Mapper.Map<Hive>(dbHive);
+            return Mapper.Map<Hive>(hive);
         }
 
         /// <inheritdoc/>
         public async Task<Hive> UpdateHiveAsync(int hiveId, UpdateHiveRequest updateRequest)
         {
-            var dbHives = await _context.Hives
-                .Where(p => p.Code == updateRequest.Code && p.Id != hiveId)
-                .ToArrayAsync().ConfigureAwait(false);
-            if (dbHives.Length > 0)
+            var dbHive = await _context.Hives
+                .FirstOrDefaultAsync(p => p.Code == updateRequest.Code && p.Id != hiveId)
+                .ConfigureAwait(false);
+
+            if (dbHive != null)
             {
                 throw new RequestedResourceHasConflictException("code");
             }
 
-            dbHives = await _context.Hives
-                .Where(p => p.Id == hiveId)
-                .ToArrayAsync().ConfigureAwait(false);
-            if (dbHives.Length == 0)
+            dbHive = await _context.Hives
+                .FirstOrDefaultAsync(s => s.Id == hiveId)
+                .ConfigureAwait(false);
+
+            if (dbHive == null)
             {
                 throw new RequestedResourceNotFoundException();
             }
-
-            var dbHive = dbHives[0];
 
             Mapper.Map(updateRequest, dbHive);
             dbHive.LastUpdatedBy = _userContext.UserId;
@@ -107,41 +118,43 @@ namespace KatlaSport.Services.HiveManagement
         /// <inheritdoc/>
         public async Task DeleteHiveAsync(int hiveId)
         {
-            var dbHives = await _context.Hives
-                .Where(p => p.Id == hiveId)
-                .ToArrayAsync().ConfigureAwait(false);
+            var dbHive = await _context.Hives
+                .FirstOrDefaultAsync(s => s.Id == hiveId)
+                .ConfigureAwait(false);
 
-            if (dbHives.Length == 0)
+            if (dbHive == null)
             {
                 throw new RequestedResourceNotFoundException();
             }
 
-            var dbHive = dbHives[0];
             if (dbHive.IsDeleted == false)
             {
                 throw new RequestedResourceHasConflictException();
             }
 
             _context.Hives.Remove(dbHive);
+
             await _context.SaveChangesAsync().ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
         public async Task SetStatusAsync(int hiveId, bool deletedStatus)
         {
-            var dbHives = await _context.Hives.Where(c => hiveId == c.Id).ToArrayAsync().ConfigureAwait(false);
+            var dbHive = await _context.Hives
+                .FirstOrDefaultAsync(s => s.Id == hiveId)
+                .ConfigureAwait(false);
 
-            if (dbHives.Length == 0)
+            if (dbHive == null)
             {
                 throw new RequestedResourceNotFoundException();
             }
 
-            var dbHive = dbHives[0];
             if (dbHive.IsDeleted != deletedStatus)
             {
                 dbHive.IsDeleted = deletedStatus;
                 dbHive.LastUpdated = DateTime.UtcNow;
                 dbHive.LastUpdatedBy = _userContext.UserId;
+
                 await _context.SaveChangesAsync().ConfigureAwait(false);
             }
         }
