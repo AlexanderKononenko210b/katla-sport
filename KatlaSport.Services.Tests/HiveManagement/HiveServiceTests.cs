@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.Xunit2;
-using AutoMapper;
 using KatlaSport.DataAccess.ProductStoreHive;
 using KatlaSport.Services.HiveManagement;
 using Moq;
@@ -13,15 +12,11 @@ namespace KatlaSport.Services.Tests.HiveManagement
     /// <summary>
     /// Tests create, update and delete Hive
     /// </summary>
-    public class AddUpdateDeleteHiveAndHiveSectionTests
+    public class HiveServiceTests
     {
-        public AddUpdateDeleteHiveAndHiveSectionTests()
+        public HiveServiceTests()
         {
-            Mapper.Reset();
-            Mapper.Initialize(x =>
-            {
-                x.AddProfile<HiveManagementMappingProfile>();
-            });
+            var mapper = AutoMapperInitialize.Instance;
         }
 
         /// <summary>
@@ -257,243 +252,100 @@ namespace KatlaSport.Services.Tests.HiveManagement
         }
 
         /// <summary>
-        /// Test create new Hive Section
+        /// Get all hives from database
         /// </summary>
-        /// <param name="context">mock object type IProductStoreHiveContext</param>
-        /// <param name="service">service for work with Hive</param>
-        /// <param name="fixture">IFixture</param>
+        /// <param name="context">Mock{IProductStoreHiveContext}</param>
+        /// <param name="service">Hive service</param>
+        /// <param name="fixture">instance type IFixture</param>
         /// <returns>Task</returns>
         [Theory]
         [AutoMoqData]
-        public async Task CreateHiveSectionAsync_UpdateRequest_Success(
+        public async Task GetHivesAsync_WithoutParameters_HiveListItems(
             [Frozen] Mock<IProductStoreHiveContext> context,
-            HiveSectionService service,
+            HiveService service,
             IFixture fixture)
         {
-            var dbHiveSections = fixture.CreateMany<StoreHiveSection>(0).ToList();
+            // arrange
 
-            context.Setup(s => s.Sections).ReturnsEntitySet(dbHiveSections);
+            var dbHives = fixture.CreateMany<StoreHive>(2).ToList();
 
-            var dbHives = fixture.CreateMany<StoreHive>(1).ToList();
+            var dbSections = fixture.CreateMany<StoreHiveSection>(5).ToList();
 
-            var hiveId = 1;
-
-            dbHives[0].Id = hiveId;
+            dbSections[0].StoreHiveId = dbHives[0].Id;
+            dbSections[1].StoreHiveId = dbHives[0].Id;
+            dbSections[2].StoreHiveId = dbHives[1].Id;
+            dbSections[3].StoreHiveId = dbHives[1].Id;
+            dbSections[4].StoreHiveId = dbHives[1].Id;
 
             context.Setup(s => s.Hives).ReturnsEntitySet(dbHives);
 
-            var dbUpdateRequest = fixture.Create<UpdateHiveSectionRequest>();
+            context.Setup(s => s.Sections).ReturnsEntitySet(dbSections);
 
-            var createdHiveSection = await service.CreateHiveSectionAsync(hiveId, dbUpdateRequest);
+            // act
 
-            Assert.Equal(dbUpdateRequest.Name, createdHiveSection.Name);
-            Assert.Equal(dbUpdateRequest.Code, createdHiveSection.Code);
+            var hiveListItems = await service.GetHivesAsync();
+
+            // assert
+
+            Assert.Equal(2, hiveListItems.Count);
+
+            Assert.Collection(
+                hiveListItems,
+                item => Assert.Equal(2, item.HiveSectionCount),
+                item => Assert.Equal(3, item.HiveSectionCount));
         }
 
         /// <summary>
-        /// Create new hive section expected RequestedResourceHasConflictException
+        /// Get hive from database by hives id
         /// </summary>
-        /// <param name="context">mock object type IProductStoreHiveContext</param>
-        /// <param name="service">service for work with Hive Section</param>
-        /// <param name="fixture">IFixture</param>
+        /// <param name="context">Mock{IProductStoreHiveContext}</param>
+        /// <param name="service">Hive service</param>
+        /// <param name="fixture">instance type IFixture</param>
         /// <returns>Task</returns>
         [Theory]
         [AutoMoqData]
-        public async Task CreateHiveSectionAsync_HiveIdAndUpdateRequest_RequestedResourceHasConflictException(
+        public async Task GetHiveAsync_HiveId_Hive(
             [Frozen] Mock<IProductStoreHiveContext> context,
-            HiveSectionService service,
+            HiveService service,
             IFixture fixture)
         {
-            var dbUpdateRequest = fixture.Create<UpdateHiveSectionRequest>();
+            // arrange
+            var dbHives = fixture.CreateMany<StoreHive>(2).ToList();
 
-            var dbHiveSections = fixture.CreateMany<StoreHiveSection>(1).ToList();
+            var hiveId = dbHives[1].Id;
 
-            dbHiveSections[0].Code = dbUpdateRequest.Code;
+            context.Setup(s => s.Hives).ReturnsEntitySet(dbHives);
 
-            context.Setup(s => s.Sections).ReturnsEntitySet(dbHiveSections);
+            // act
+            var hive = await service.GetHiveAsync(hiveId);
 
-            var hiveId = 1;
-
-            await Assert.ThrowsAsync<RequestedResourceHasConflictException>(
-                () => service.CreateHiveSectionAsync(hiveId, dbUpdateRequest));
+            // assert
+            Assert.Equal(hiveId, hive.Id);
         }
 
         /// <summary>
-        /// Test update Hive Section
+        /// Get hive from database by hives id expected RequestedResourceNotFoundException
         /// </summary>
-        /// <param name="context">mock object type IProductStoreHiveContext</param>
-        /// <param name="service">service for work with Hive Section</param>
-        /// <param name="fixture">IFixture</param>
+        /// <param name="context">Mock{IProductStoreHiveContext}</param>
+        /// <param name="service">Hive service</param>
+        /// <param name="fixture">instance type IFixture</param>
         /// <returns>Task</returns>
         [Theory]
         [AutoMoqData]
-        public async Task UpdateHiveSectionAsync_HiveSectionId_UpdateHiveSectionRequest_Success(
+        public async Task GetHiveAsync_HiveId_RequestedResourceNotFoundException(
             [Frozen] Mock<IProductStoreHiveContext> context,
-            HiveSectionService service,
+            HiveService service,
             IFixture fixture)
         {
-            var hiveId = 1;
+            // arrange
+            var dbHives = fixture.CreateMany<StoreHive>(2).ToList();
 
-            var dbUpdateRequest = fixture.Create<UpdateHiveSectionRequest>();
+            var hiveId = dbHives[0].Id + dbHives[1].Id;
 
-            var dbHiveSections = fixture.CreateMany<StoreHiveSection>(1).ToList();
+            context.Setup(s => s.Hives).ReturnsEntitySet(dbHives);
 
-            dbHiveSections[0].Id = hiveId;
-
-            dbHiveSections[0].Code = $"{dbUpdateRequest.Code} + 1";
-
-            context.Setup(s => s.Sections).ReturnsEntitySet(dbHiveSections);
-
-            var updateHiveSection = await service.UpdateHiveSectionAsync(hiveId, dbUpdateRequest);
-
-            Assert.Equal(dbUpdateRequest.Name, updateHiveSection.Name);
-            Assert.Equal(dbUpdateRequest.Code, updateHiveSection.Code);
-        }
-
-        /// <summary>
-        /// Test update Hive Section expected RequestedResourceHasConflictException
-        /// </summary>
-        /// <param name="context">mock object type IProductStoreHiveContext</param>
-        /// <param name="service">service for work with Hive</param>
-        /// <param name="fixture">IFixture</param>
-        /// <returns>Task</returns>
-        [Theory]
-        [AutoMoqData]
-        public async Task UpdateHiveSectionAsync_HiveSectionId_UpdateRequest_RequestedResourceHasConflictException(
-            [Frozen] Mock<IProductStoreHiveContext> context,
-            HiveSectionService service,
-            IFixture fixture)
-        {
-            var hiveSectionId = 1;
-
-            var dbUpdateRequest = fixture.Create<UpdateHiveSectionRequest>();
-
-            var dbHiveSections = fixture.CreateMany<StoreHiveSection>(1).ToList();
-
-            dbHiveSections[0].Id = hiveSectionId + 1;
-
-            dbHiveSections[0].Code = dbUpdateRequest.Code;
-
-            context.Setup(s => s.Sections).ReturnsEntitySet(dbHiveSections);
-
-            await Assert.ThrowsAsync<RequestedResourceHasConflictException>(
-                () => service.UpdateHiveSectionAsync(hiveSectionId, dbUpdateRequest));
-        }
-
-        /// <summary>
-        /// Test update Hive Section expected RequestedResourceNotFoundException
-        /// </summary>
-        /// <param name="context">mock object type IProductStoreHiveContext</param>
-        /// <param name="service">service for work with Hive</param>
-        /// <param name="fixture">IFixture</param>
-        /// <returns>Task</returns>
-        [Theory]
-        [AutoMoqData]
-        public async Task UpdateHiveSectionAsync_HiveId_UpdateHiveRequest_RequestedResourceNotFoundException(
-            [Frozen] Mock<IProductStoreHiveContext> context,
-            HiveSectionService service,
-            IFixture fixture)
-        {
-            var hiveSectionId = 1;
-
-            var dbUpdateRequest = fixture.Create<UpdateHiveSectionRequest>();
-
-            var dbHiveSections = fixture.CreateMany<StoreHiveSection>(1).ToList();
-
-            dbHiveSections[0].Id = hiveSectionId + 1;
-
-            dbHiveSections[0].Code = $"{dbUpdateRequest.Code}1";
-
-            context.Setup(s => s.Sections).ReturnsEntitySet(dbHiveSections);
-
-            await Assert.ThrowsAsync<RequestedResourceNotFoundException>(
-                () => service.UpdateHiveSectionAsync(hiveSectionId, dbUpdateRequest));
-        }
-
-        /// <summary>
-        /// Test delete Hive Section
-        /// </summary>
-        /// <param name="context">mock object type IProductStoreHiveContext</param>
-        /// <param name="service">service for work with Hive</param>
-        /// <param name="fixture">IFixture</param>
-        /// <returns>Task</returns>
-        [Theory]
-        [AutoMoqData]
-        public async Task DeleteHiveSectionAsync_HiveSectionId_Success(
-            [Frozen] Mock<IProductStoreHiveContext> context,
-            HiveSectionService service,
-            IFixture fixture)
-        {
-            var hiveSectionId = 1;
-
-            var dbHiveSections = fixture.CreateMany<StoreHiveSection>(1).ToList();
-
-            dbHiveSections[0].Id = hiveSectionId;
-
-            dbHiveSections[0].IsDeleted = true;
-
-            context.Setup(s => s.Sections).ReturnsEntitySet(dbHiveSections);
-
-            await service.DeleteHiveSectionAsync(hiveSectionId);
-
-            await Assert.ThrowsAsync<RequestedResourceNotFoundException>(
-                () => service.GetHiveSectionAsync(hiveSectionId));
-        }
-
-        /// <summary>
-        /// Test delete Hive Section expected RequestedResourceNotFoundException
-        /// </summary>
-        /// <param name="context">mock object type IProductStoreHiveContext</param>
-        /// <param name="service">service for work with Hive Section</param>
-        /// <param name="fixture">IFixture</param>
-        /// <returns>Task</returns>
-        [Theory]
-        [AutoMoqData]
-        public async Task DeleteHiveSectionAsync_HiveSectionId_RequestedResourceNotFoundException(
-            [Frozen] Mock<IProductStoreHiveContext> context,
-            HiveSectionService service,
-            IFixture fixture)
-        {
-            var hiveSectionId = 1;
-
-            var dbHiveSections = fixture.CreateMany<StoreHiveSection>(1).ToList();
-
-            dbHiveSections[0].Id = hiveSectionId + 1;
-
-            dbHiveSections[0].IsDeleted = true;
-
-            context.Setup(s => s.Sections).ReturnsEntitySet(dbHiveSections);
-
-            await Assert.ThrowsAsync<RequestedResourceNotFoundException>(
-                () => service.DeleteHiveSectionAsync(hiveSectionId));
-        }
-
-        /// <summary>
-        /// Test delete Hive Section expected RequestedResourceHasConflictException
-        /// </summary>
-        /// <param name="context">mock object type IProductStoreHiveContext</param>
-        /// <param name="service">service for work with Hive Section</param>
-        /// <param name="fixture">IFixture</param>
-        /// <returns>Task</returns>
-        [Theory]
-        [AutoMoqData]
-        public async Task DeleteHiveSectionAsync_HiveSectionId_RequestedResourceHasConflictException(
-            [Frozen] Mock<IProductStoreHiveContext> context,
-            HiveSectionService service,
-            IFixture fixture)
-        {
-            var hiveSectionId = 1;
-
-            var dbHiveSections = fixture.CreateMany<StoreHiveSection>(1).ToList();
-
-            dbHiveSections[0].Id = hiveSectionId;
-
-            dbHiveSections[0].IsDeleted = false;
-
-            context.Setup(s => s.Sections).ReturnsEntitySet(dbHiveSections);
-
-            await Assert.ThrowsAsync<RequestedResourceHasConflictException>(
-                () => service.DeleteHiveSectionAsync(hiveSectionId));
+            // assert
+            await Assert.ThrowsAsync<RequestedResourceNotFoundException>(() => service.GetHiveAsync(hiveId));
         }
     }
 }
